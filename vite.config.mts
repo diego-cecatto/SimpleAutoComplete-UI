@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
             // , basicSsl()
         ],
         server: {
-            port: 3001,
+            port: 8081,
             // https: env.HTTPS || true,
             host: env.HOST || 'localhost',
             open: true,
