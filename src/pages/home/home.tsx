@@ -4,7 +4,7 @@ import {
     Container,
     TextField,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { AutocompleteItem } from '../../actions/base.action';
 import { MoviesAction } from '../../actions/movies.action';
 
@@ -12,25 +12,49 @@ export const HomePage = () => {
     const [movies, setMovies] = useState<AutocompleteItem[] | undefined | null>(
         null
     );
-    const [search, setSearch] = useState('');
+    const refMovieAction = useRef<{
+        action: MoviesAction;
+        debounce: NodeJS.Timeout | string | number | undefined;
+    }>({
+        action: new MoviesAction(),
+        debounce: undefined,
+    });
+
     const LOADING = movies === null;
 
     useEffect(() => {
-        const movieAction = new MoviesAction();
-        movieAction.autocomplete(search).then((movies) => {
-            setMovies(movies);
-        });
+        fetchMovies();
     }, []);
 
+    function fetchMovies(search: string = '') {
+        refMovieAction.current.action.autocomplete(search).then((movies) => {
+            setMovies(movies);
+        });
+    }
+
+    function handleChangeSearch(
+        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ): void {
+        clearTimeout(refMovieAction.current.debounce);
+        refMovieAction.current.action.abort();
+        refMovieAction.current.debounce = window.setTimeout(() => {
+            setMovies(null);
+            fetchMovies(event.target.value);
+        }, 50);
+    }
+
     return (
-        <Container sx={{ p: 3 }} maxWidth="xl">
+        <Container sx={{ p: 3 }} maxWidth="lg">
             <Autocomplete
                 options={movies ?? []}
+                clearOnBlur={false}
+                getOptionLabel={(movie) => movie.name}
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        label="Movies"
+                        label="Search your movie title here"
                         size="small"
+                        onChange={handleChangeSearch}
                         InputProps={{
                             ...params.InputProps,
                             endAdornment: (

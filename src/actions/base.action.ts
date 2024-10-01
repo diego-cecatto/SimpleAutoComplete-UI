@@ -5,6 +5,7 @@ export declare type AutocompleteItem = {
 
 export class BaseAction {
     private url = '';
+    controller = new AbortController();
 
     /**
      * @argument endpoint
@@ -15,14 +16,16 @@ export class BaseAction {
     }
 
     async autocomplete(name: string): Promise<AutocompleteItem[] | undefined> {
+        const signal = this.controller.signal;
         try {
-            console.log(this.url);
-            var response = await fetch(`${this.url}/autocomplete?name=${name}`);
+            var response = await fetch(
+                `${this.url}/autocomplete?name=${name}`,
+                { signal }
+            );
 
             if (!response.ok) {
                 throw new Error('Failed to fetch movies');
             }
-
             return await response.json();
         } catch (error) {
             console.error('Error fetching movies:', error);
@@ -32,5 +35,10 @@ export class BaseAction {
 
     private buildUrl(endpoint: string) {
         return `${import.meta.env.VITE_API_URL}${endpoint}`;
+    }
+
+    abort() {
+        this.controller.abort();
+        this.controller = new AbortController();
     }
 }
